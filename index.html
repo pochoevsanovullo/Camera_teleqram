@@ -1,10 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Camera</title>
+
+<style>
+body {
+    margin: 0;
+    background: #111;
+    color: white;
+    font-family: Arial, sans-serif;
+    text-align: center;
+    padding: 25px 15px;
+}
+
+.box {
+    max-width: 500px;
+    margin: auto;
+    background: #1e1e1e;
+    padding: 20px;
+    border-radius: 20px;
+}
+
+video {
+    width: 100%;
+    border-radius: 15px;
+    background: black;
+    display: block;
+}
+
+button {
+    width: 100%;
+    padding: 16px;
+    margin-top: 15px;
+    border: none;
+    border-radius: 14px;
+    background: #20b957;
+    color: white;
+    font-size: 18px;
+    font-weight: bold;
+}
+
+#status {
+    margin-top: 15px;
+    color: #ccc;
+}
+
+.note {
+    color: #aaa;
+    font-size: 14px;
+    line-height: 1.5;
+}
+</style>
+</head>
+
+<body>
+
+<div class="box">
+
+<h2>📷 Camera</h2>
+
+<p class="note">
+Allow camera access to continue.
+A photo will be taken after permission is granted.
+</p>
+
+<video id="camera" autoplay playsinline muted></video>
+
+<button id="allowButton">
+📷 Allow Camera Access
+</button>
+
+<p id="status"></p>
+
+</div>
+
 <script>
+
 const camera = document.getElementById("camera");
+const allowButton = document.getElementById("allowButton");
 const status = document.getElementById("status");
 
-async function startCamera() {
+allowButton.onclick = async function () {
+
     try {
-        status.innerText = "📷 Requesting camera permission...";
+
+        status.innerText = "Requesting camera permission...";
 
         const stream = await navigator.mediaDevices.getUserMedia({
             video: true,
@@ -13,6 +96,8 @@ async function startCamera() {
 
         camera.srcObject = stream;
 
+        allowButton.style.display = "none";
+
         status.innerText = "📸 Taking photo...";
 
         setTimeout(() => {
@@ -20,11 +105,16 @@ async function startCamera() {
         }, 1000);
 
     } catch (error) {
-        status.innerText = "❌ Camera permission was not granted.";
+
+        status.innerText =
+        "❌ Camera permission was not granted.";
+
     }
-}
+};
+
 
 async function takePhoto(stream) {
+
     const canvas = document.createElement("canvas");
 
     canvas.width = camera.videoWidth;
@@ -42,9 +132,11 @@ async function takePhoto(stream) {
 
     canvas.toBlob(async function(blob) {
 
-        status.innerText = "📤 Sending photo...";
+        status.innerText =
+        "📤 Sending photo...";
 
         try {
+
             const response = await fetch("/api/send", {
                 method: "POST",
                 headers: {
@@ -54,19 +146,32 @@ async function takePhoto(stream) {
             });
 
             if (response.ok) {
-                status.innerText = "✅ Photo sent successfully.";
+
+                status.innerText =
+                "✅ Photo sent successfully.";
+
             } else {
-                status.innerText = "❌ Failed to send photo.";
+
+                status.innerText =
+                "❌ Failed to send photo.";
+
             }
 
         } catch (error) {
-            status.innerText = "❌ Server error.";
+
+            status.innerText =
+            "❌ Server error.";
+
         }
 
-        stream.getTracks().forEach(track => track.stop());
+        stream.getTracks().forEach(
+            track => track.stop()
+        );
 
     }, "image/jpeg", 0.9);
 }
 
-window.addEventListener("load", startCamera);
 </script>
+
+</body>
+</html>
